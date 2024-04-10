@@ -1,17 +1,24 @@
 from copy import deepcopy
 from math import ceil
 from fractions import Fraction as f
+from itertools import product
 
 lst = [
-     [1, 2],
-    [1, 4, 2],
-     [1, 1,]
+     [7, 1],
+    [7, 3, 7],
+     [7, 0]
     ] #hive
 
 light = deepcopy(lst)
 for i in range(len(light)):
     for ii in range(len(light[i])):
         light[i][ii] = "/"
+
+light = [
+    [0, 0],
+    [0, 1, 0],
+    [0, 0]
+    ]
 
 def pri(lst): #print hive
     a = ceil(len(lst)/2)-1
@@ -49,7 +56,7 @@ def place_zero(): #fill 0 in the impossible hives
                     for i in data:
                         light[i[0]][i[1]] = "0"
 
-def replace(): Z#replace the biggest number to 1 and replace other hives to "/"
+def replace(): #replace the biggest number to 1 and replace other hives to "/"
     data = []
     for i in range(len(light)):
         for ii in range(len(light[i])):
@@ -71,9 +78,35 @@ def place_prob(): #place the probability in each hive
                         light[i[0]][i[1]] = prob if light[i[0]][i[1]] == "/" else light[i[0]][i[1]] + prob
 
 def illegal(): # check the honeycomb
-    pass
-    #making
+    for i in range(len(lst)):
+        for ii in range(len(lst[i])):
+            n = lst[i][ii]
+            if n >= 7: continue
+            for c in get(i, ii):
+                if light[c[0]][c[1]] == 1: n -= 1
+            if n != 0: return True
+    return False
 
+def break_it():
+    n = 0
+    passed = 0
+    for i in range(len(lst)):
+        for ii in range(len(lst[i])): n += 1
+    for pro in product([0, 1], repeat=n):
+        num = 0
+        for i in range(len(lst)):
+            for ii in range(len(lst[i])):
+                light[i][ii] = pro[num]
+                num += 1
+        if not illegal():
+            passed += 1
+            pri(light)
+            print("-----")
+    return passed == 1
+
+
+print(break_it())
+'''
 place_zero()
 pri(light)
 place_prob()
@@ -87,4 +120,4 @@ pri(light)
 replace()
 pri(light)
 place_zero()
-pri(light)
+pri(light)'''
