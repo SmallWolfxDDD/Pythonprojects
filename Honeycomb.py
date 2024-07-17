@@ -118,7 +118,8 @@ def fill_board(light): #fill the board from the light
             lst[y][x] = lig
     return lst
 
-def reduce_board(lst, light, deep=1): #deep = the number of the hives that we need to reduce
+def reduce_board(lst, light, deep=1, output=True): #deep = the number of the hives that we need to reduce
+    passed = 0
     n = 0
     for i in range(len(lst)):
         for ii in range(len(lst[i])): n += 1
@@ -130,14 +131,25 @@ def reduce_board(lst, light, deep=1): #deep = the number of the hives that we ne
                     copy[y][x] = 7
                 num += 1
         if break_it(copy, False):
-            pri(copy)
-            print("-----")
-    
+            if output:
+                pri(copy)
+                print("-----")
+            passed += 1
+    return passed >= 1
 
+def max_reduce(lst, light):
+    n = 0
+    for i in range(len(lst)):
+        for ii in range(len(lst[i])): n += 1
+    while not reduce_board(lst, light, n, False):
+        n -= 1
+    reduce_board(lst, light, n)
+    print(f"Max_reduce = {n}")
 
 #print(break_it(lst))
 #pri(fill_board(light))
-reduce_board(fill_board(light), light, 4) #fill_board(light) the honeycomb, light = light, 4 = we need to reduce 4 hives (No output if there are no any solutions)
+#print(reduce_board(fill_board(light), light, 4)) #fill_board(light) the honeycomb, light = light, 4 = we need to reduce 4 hives (No output if there are no any solutions)
+max_reduce(fill_board(light), light) #Find the smallest possible honeycomb
 '''
 place_zero()
 pri(light)
