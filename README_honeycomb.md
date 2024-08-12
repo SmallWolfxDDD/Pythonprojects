@@ -1,1 +1,1 @@
-# the method has a little bugs and we are going to fix it
+read the note for the function
