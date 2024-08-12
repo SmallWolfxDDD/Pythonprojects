@@ -1,24 +1,18 @@
 from copy import deepcopy
 from math import ceil
 from fractions import Fraction as f
-from itertools import product, permutations, combinations
+from itertools import product, permutations
 
 lst = [
-     [7, 1],
-    [7, 3, 7],
-     [7, 0]
+     [7, 7],
+    [7, 0, 7],
+     [7, 7]
     ] #hive
 
-'''light = deepcopy(lst)
-for i in range(len(light)):
-    for ii in range(len(light[i])):
-        light[i][ii] = "/"'''
-
-
 light = [
-    [1, 0],
-   [1, 1, 1],
-    [0, 1]
+   [0, 0, 1],
+  [0, 0, 0, 0],
+   [1, 0, 0]
     ]
 
 def pri(lst): #print hive
@@ -28,9 +22,17 @@ def pri(lst): #print hive
         for ii in lst[i]: print(ii, end=" ")
         print()
 
-def get(y, x, lst): # get the coordinates of surrounding hives
+def write_file(lst, file): #write the hive into a file
+    a = ceil(len(lst)/2)-1
+    for i in range(len(lst)):
+        s = ''
+        for _ in range(abs(a-i)): s += " "
+        for ii in lst[i]: s += str(ii)+" "
+        file.write(s+"\n")
+
+def get(y, x, lst, inc=False): # get the coordinates of surrounding hives
     data = []
-    a = abs(ceil(len(lst)/2)-1-y)                               
+    a = abs(ceil(len(lst)/2)-1-y)
     if x-1+a >= 0 and y-1 >= 0: data.append((y-1, x-1+a))
     if x+a < len(lst[y-1]) and y-1 >= 0: data.append((y-1, x+a))
     if x-1 >= 0: data.append((y, x-1))
@@ -38,57 +40,20 @@ def get(y, x, lst): # get the coordinates of surrounding hives
     if y+1 < len(lst):
         if x-1+a >= 0: data.append((y+1, x-1+a))
         if x+a < len(lst[y+1]): data.append((y+1, x+a))
-    return data
+    data = [i for i in data if lst[i[0]][i[1]] != 8]
+    return data + [[y, x]] if inc else data
 
-def gets(y, x, lst): # get the coordinates of valid surrounding hives and the probability
-    data, n = [], lst[y][x]
-    for i in get(y, x, lst):
-        if light[i[0]][i[1]] == "1": n -= 1
-        elif light[i[0]][i[1]] == "0": pass
-        else: data.append(i)
-    return data, f(n, len(data)) if len(data) != 0 else 0
-
-def place_zero(lst): #fill 0 in the impossible hives
-    for y in range(len(lst)):
-        for x in range(len(lst[y])):
-            if 0 <= lst[y][x] <= 6:
-                data, prob = gets(y, x, lst)
-                if prob == 0:
-                    for i in data:
-                        light[i[0]][i[1]] = "0"
-
-def replace(lst): #replace the biggest number to 1 and replace other hives to "/"
-    data = []
-    for i in range(len(light)):
-        for ii in range(len(light[i])):
-            if not light[i][ii] in ["/", "1", "0"]: data.append(light[i][ii])
-    data = sorted(set(data))[-1]
-    for i in range(len(light)):
-        for ii in range(len(light[i])):
-            if light[i][ii] == data: light[i][ii] = "1"
-            elif light[i][ii] in ["0", "1"]: pass
-            else: light[i][ii] = "/"
-
-def place_prob(lst): #place the probability in each hive
-    for y in range(len(lst)):
-        for x in range(len(lst[y])):
-            if 1 <= lst[y][x] <= 6:
-                block, prob = gets(y, x, lst)
-                if prob != 0:
-                    for i in block:
-                        light[i[0]][i[1]] = prob if light[i[0]][i[1]] == "/" else light[i[0]][i[1]] + prob
-
-def illegal(lst, light): # check the honeycomb
+def illegal(lst, light, inc=False): # check the honeycomb if it is illegal
     for y in range(len(lst)):
         for x in range(len(lst[y])):
             n = lst[y][x]
             if n >= 7: continue
-            for c in get(y, x, lst):
+            for c in get(y, x, lst, inc):
                 if light[c[0]][c[1]] == 1: n -= 1
             if n != 0: return True
     return False
 
-def break_it(lst, output=True):
+def break_it(lst, output=True, inc=False): #Exhausion and return is there unqiue solution
     light = deepcopy(lst)
     n = 0
     passed = 0
@@ -100,25 +65,25 @@ def break_it(lst, output=True):
             for x in range(len(lst[y])):
                 light[y][x] = pro[num]
                 num += 1
-        if not illegal(lst, light):
+        if not illegal(lst, light, inc):
             passed += 1
             if output:
                 pri(light)
                 print("-----")
     return passed == 1
 
-def fill_board(light): #fill the board from the light
+def fill_board(light, inc=False): #fill the board from the light
     lst = deepcopy(light)
     for y in range(len(lst)):
         for x in range(len(lst[y])):
             lig = 0
-            for i in get(y, x, light):
+            for i in get(y, x, light, inc):
                 if light[i[0]][i[1]] == 1:
                     lig += 1
             lst[y][x] = lig
     return lst
 
-def reduce_board(lst, light, deep=1, output=True): #deep = the number of the hives that we need to reduce
+def reduce_board(lst, light, deep=1, output=True, f=False): #try to reduce (deep) hive and keep ensure there have unqiue solution after reduce hive
     passed = 0
     n = 0
     for i in range(len(lst)):
@@ -132,36 +97,36 @@ def reduce_board(lst, light, deep=1, output=True): #deep = the number of the hiv
                 num += 1
         if break_it(copy, False):
             if output:
-                pri(copy)
-                print("-----")
+                if not f:
+                    pri(copy)
+                    print("-----")
+                else:
+                    write_file(copy, f)
+                    f.write("-----\n")
             passed += 1
     return passed >= 1
 
-def max_reduce(lst, light):
+def max_reduce(lst, light, output=True, f=False): #find how many hive can be reduce (MAXIMUM)
     n = 0
     for i in range(len(lst)):
         for ii in range(len(lst[i])): n += 1
     while not reduce_board(lst, light, n, False):
         n -= 1
-    reduce_board(lst, light, n)
-    print(f"Max_reduce = {n}")
-
-#print(break_it(lst))
-#pri(fill_board(light))
-#print(reduce_board(fill_board(light), light, 4)) #fill_board(light) the honeycomb, light = light, 4 = we need to reduce 4 hives (No output if there are no any solutions)
-max_reduce(fill_board(light), light) #Find the smallest possible honeycomb
-'''
-place_zero()
-pri(light)
-place_prob()
-pri(light)
-replace()
-pri(light)
-place_zero()
-pri(light)
-place_prob()
-pri(light)
-replace()
-pri(light)
-place_zero()
-pri(light)'''
+        if n <= 0:
+            if output:
+                if not f:
+                    print("ERROR with")
+                    pri(lst)
+                else:
+                    f.writelines("ERROR with\n")
+                    write_file(lst, f)
+            return "ERROR"
+    if output:
+        reduce_board(lst, light, n, f=f)
+        if not f:
+            print(f"Max_reduce = {n}")
+            print(f'The_number_of_the_least_info = {10-n}')
+        else:
+            f.writelines(f"Max_reduce = {n}\n")
+            f.writelines(f"The_number_of_the_least_info = {10-n}\n")
+    return f"The_number_of_the_least_info = {10-n}\n"
